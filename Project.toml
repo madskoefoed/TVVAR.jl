@@ -1,7 +1,10 @@
-name = "TV-VAR"
+name = "TVVAR"
 uuid = "a0c9c6ed-db83-4746-ae2d-166d78480cea"
 authors = ["Mads Koefoed"]
 version = "0.1.0"
+
+[deps]
+Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 
 [compat]
 julia = "1"

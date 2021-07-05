@@ -8,37 +8,44 @@ Estimate a stochastic volatility model. Volatility is modelled as a random walk.
 The hyperparameter 2/3 < β < 1 is a discount factor controlling the shocks to Σ.
 """
 
-# The kalman filter update
-# m = m
-# P = F' * P * F + 1.0
+function predict!(model::TVVAR)
+    @unpack y, x, m, P, S, δ, ν = prior
 
-function predict!(prior::TVVAR, y::Vector{<:T}, x::Matrix{<:T}) where T <: AbstractFloat
-    β = get_β(prior.ν)
-    k = get_k(length(y), β)
     F = get_F(x)
-    prior.P = prior.P / prior.δ
-    Q = F' * prior.P * F + 1.0
-    prior.S = prior.S / k
-    prior.μ = prior.m' * F
-    prior.Σ = Q * prior.S
+    β = get_β(ν)
+    k = get_k(length(y), β)
+    P = P / δ
+    Q = F' * P * F + 1.0
+    μ = m' * F
+    Σ = Q * (1 - β) / (3 - 2) * S
+    e = y .- μ
+
+    # Update
+    model.μ = μ
+    model.Σ = Σ
+    model.e = e
+    model.Q = Q
 end
 
-function predict!(prior::VAR, y::Vector{<:T}, x::Matrix{<:T}) where T <: AbstractFloat
-    F = get_F(x)
-    prior.ν = prior.ν + 1.0
-    prior.P = prior.P / prior.δ
-    Q = prior.F' * prior.P * prior.F + 1.0
-    prior.μ = prior.m' * prior.F
-    prior.Σ = Q * (1 - β) / (3 - 2) * prior.S
+function update(model::TVVAR)
+
 end
 
-function update!(prior::TVVAR, y::Vector{<:T}, x::Matrix{<:T}) where T <: AbstractFloat
-    β = get_β(prior.ν)
-    k = get_k(length(y), β)
+function timestep(prior::Prior)
+    # Unpack
+    m, P, S, δ, ν = posterior
+
     F = get_F(x)
-    prior.P = prior.P / prior.δ
-    Q = F' * prior.P * F + 1.0
-    prior.S = prior.S / k
-    prior.μ = prior.m' * F
-    prior.Σ = Q * prior.S
+    β = get_β(tvvar.ν)
+    k = get_k(length(y), β)
+    m = tvvar.m
+    P = tvvar.P / tvvar.δ
+    Q = F' * P * F + 1.0
+    μ = m' * F
+    Σ = Q * (1 - β) / (3 - 2) * S
+    e = y .- μ
+    S = S / k + e * e' / Q
+    K = P * F * Q
+    m = tvvar.m + K * e
+    tvvar = TVVAR(y, x, m, P, S, δ, ν, μ, Σ)
 end
