@@ -1,51 +1,23 @@
-using Base: AbstractFloat
-
 """
-estimate(model::MSV)
+estimate(model::TVVAR)
 
 Estimate a stochastic volatility model. Volatility is modelled as a random walk.
 
 The hyperparameter 2/3 < β < 1 is a discount factor controlling the shocks to Σ.
 """
 
-function predict!(model::TVVAR)
-    @unpack y, x, m, P, S, δ, ν = prior
-
-    F = get_F(x)
-    β = get_β(ν)
-    k = get_k(length(y), β)
+function predict!(model::TVVAR, F::Vector{<:T}) where T <: AbstractFloat
+    @unpack m, P, S, δ, β, p, d, n, k, ν, Q = model
+    # Predict step
     P = P / δ
+    S = S / k
     Q = F' * P * F + 1.0
     μ = m' * F
     Σ = Q * (1 - β) / (3 - 2) * S
-    e = y .- μ
-
-    # Update
+    # Update model container
+    model.P = P
+    model.S = S
+    model.Q = Q
     model.μ = μ
     model.Σ = Σ
-    model.e = e
-    model.Q = Q
-end
-
-function update(model::TVVAR)
-
-end
-
-function timestep(prior::Prior)
-    # Unpack
-    m, P, S, δ, ν = posterior
-
-    F = get_F(x)
-    β = get_β(tvvar.ν)
-    k = get_k(length(y), β)
-    m = tvvar.m
-    P = tvvar.P / tvvar.δ
-    Q = F' * P * F + 1.0
-    μ = m' * F
-    Σ = Q * (1 - β) / (3 - 2) * S
-    e = y .- μ
-    S = S / k + e * e' / Q
-    K = P * F * Q
-    m = tvvar.m + K * e
-    tvvar = TVVAR(y, x, m, P, S, δ, ν, μ, Σ)
 end

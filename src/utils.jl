@@ -1,17 +1,14 @@
-using Base: AbstractFloat
-
 num2mat(x::Real) = fill(x, 1, 1)
 vec2mat(x::Vector) = repeat(x, 1, 1)
 
-get_ν(β) = β/(1 - β)
-get_β(ν) = ν/(1 + ν)
-get_k(p, β) = (β - p*β + p)/(2β - p*β + p - 1)
+expandArray(x, N) = repeat(reshape(x, 1, size(x, 1), size(x, 2)), N, 1, 1)
 
-function get_F()
+function getF()
     F = [1.0]
     return F
 end
-function get_F(x::Matrix{<:AbstractFloat})
+
+function getF(x::Matrix{<:AbstractFloat})
     p, d = size(x)
     F = [1.0]
     append!(F, vec(x))

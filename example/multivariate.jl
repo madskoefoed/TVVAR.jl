@@ -22,11 +22,15 @@ for t in 1:T
     end
 end
 
-# Construct priors
-priors = TVVAR(y, fill(0.0, 3, 2), Matrix(1000.0I, 3, 3), Matrix(1.0I, 2, 2), 0.99, 0.99)
+# Construct model: VAR(3, 2)
+m = zeros(3 * 2 + 1, 2);
+P = Matrix(1000.0I, 3 * 2 + 1, 3 * 2 + 1);
+S = Matrix(1.0I, 2, 2);
+
+priors = Priors(m, P, S, 0.99, 0.99);
 
 # Estimate
-est = estimate(priors)
+est = estimation(priors, y);
 
 # Plot simulated data and estimated means
 pl = scatter(est.y, color = [:blue :red], markeralpha = 0.5, label = ["observed y(1)" "observed y(2)"], title = "Time series: VAR(2, 1)", legend = :bottom, ylim = [-10.0, 10.0])
