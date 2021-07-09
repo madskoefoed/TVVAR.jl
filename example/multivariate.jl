@@ -9,16 +9,17 @@ using Distributions
 # Generate an VAR(2, 1) time series. The two series are positively correlated:
 # y(t) = [-1.0 1.0] + [0.5 -0.5] * y(t-1) + Σ
 α = [-1.0 1.0]
-β = [0.5 0.0; 0.0 -0.5]
+β = [0.9 0.0; 0.0 -0.7]
 b = convert(Int, size(β, 1)/2)
-T = 1_000
+T = 10_000
 y = zeros(T, 2);
-Σ = Matrix(cholesky([1.0 0.5; 0.5 4.0]).L)
+Σ = [1.0 0.5; 0.5 4.0]
+L = Matrix(cholesky(Σ).L)
 for t in 1:T
     if t <= b
-        y[t, :] = α + rand(MvNormal([0.0, 0.0], I))' * Σ
+        y[t, :] = α + rand(MvNormal([0.0, 0.0], I))' * L
     else
-        y[t, :] = α + vec(y[t-1:-1:t-b, :])' * β + rand(MvNormal([0.0, 0.0], I))' * Σ
+        y[t, :] = α + vec(y[t-1:-1:t-b, :])' * β + rand(MvNormal([0.0, 0.0], I))' * L
     end
 end
 
@@ -27,13 +28,17 @@ m = zeros(3 * 2 + 1, 2);
 P = Matrix(1000.0I, 3 * 2 + 1, 3 * 2 + 1);
 S = Matrix(1.0I, 2, 2);
 
-priors = Priors(m, P, S, 0.99, 0.99);
+priors = Priors(m, P, S);
 
 # Estimate
-est = estimation(priors, y);
+est = estimate(priors, StochasticVol(0.99, 0.999), y);
+es2 = estimate(priors, ConstantVol(0.99, 5.0), y);
+
+#plot(est.S[100:end, 1, 1]) ; plot!(es2.S[100:end, 1, 1])
+plot(est.Σ[100:end, 1, 1]) ; plot!(es2.Σ[100:end, 1, 1])
 
 # Plot simulated data and estimated means
-pl = scatter(est.y, color = [:blue :red], markeralpha = 0.5, label = ["observed y(1)" "observed y(2)"], title = "Time series: VAR(2, 1)", legend = :bottom, ylim = [-10.0, 10.0])
+pl = scatter(est.y, color = [:blue :red], markeralpha = 0.5, label = ["observed y(1)" "observed y(2)"], title = "Time series: VAR(2, 1)", legend = :bottom, ylim = [-25.0, 15.0])
 pl = plot!(est.μ, color = [:blue :red], linewidth = 2; label = ["predicted y(1)" "predicted y(2)"])
 
 savefig(pl,"./example/timeseries_multi.png")
@@ -50,6 +55,7 @@ savefig(pl,"./example/coefficients_multi.png")
 
 # Plot true and estimated variances
 pl = plot(hcat(est.Σ[:, 1, 1], est.Σ[:, 2, 2]), color = [:blue :red], linewidth = 1, label = "", ylim = [0.0, 10.0], title = "Variance")
-pl = plot!(Σ, color = :blue, linestyle = :dash, label = "")
+pl = plot!(repeat([Σ[1, 1]], T), color = :blue, linestyle = :dash, label = "")
+pl = plot!(repeat([Σ[2, 2]], T), color = :red, linestyle = :dash, label = "")
 
 savefig(pl,"./example/variance_multi.png")

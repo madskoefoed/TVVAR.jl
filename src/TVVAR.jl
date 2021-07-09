@@ -6,18 +6,20 @@
 #using Base: AbstractFloat
 using LinearAlgebra: diag, kron, I, cholesky
 using Distributions: Normal, MvNormal, MvTDist, InverseWishart, Wishart, MatrixNormal
-using Parameters: @unpack
+#using Parameters: @unpack
 
 # Include scripts
 include("./src/types.jl")
 include("./src/utils.jl")
-include("./src/estimation.jl")
+include("./src/estimate.jl")
+include("./src/predict.jl")
+include("./src/update.jl")
 
 include("./example/univariate.jl")
 include("./example/multivariate.jl")
 
 # Exported types
-export TVVAR, KF
+export Priors, Hypers
 
 # Exported functions
 export estimate

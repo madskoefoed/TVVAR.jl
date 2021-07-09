@@ -14,3 +14,5 @@ function getF(x::Matrix{<:AbstractFloat})
     append!(F, vec(x))
     return F
 end
+
+getk(p, β) = (β*(1-p)+p)/(β*(2-p)+p-1)
