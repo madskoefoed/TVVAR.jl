@@ -1,3 +1,7 @@
+##############
+### Hypers ###
+##############
+
 abstract type Hypers end
 
 mutable struct StochasticVol{T<:AbstractFloat} <: Hypers
@@ -28,6 +32,10 @@ mutable struct ConstantVol{T<:AbstractFloat} <: Hypers
     end
 end
 
+##############
+### Priors ###
+##############
+
 mutable struct Priors{T<:AbstractFloat}
     m::Array{T, 2}
     P::Array{T, 2}
@@ -51,6 +59,32 @@ mutable struct Priors{T<:AbstractFloat}
     end
 end
 
+# Outer constructor for univariate case (p = 1)
+function Priors(m::Array{T, 1}, P::Array{T, 2}, S::T) where T <: AbstractFloat
+    m = reshape(m, 1, 1)
+    S = reshape([S], 1, 1)
+    return (Priors(m, P, S))
+end
+
+# Outer constructor for univariate stochastic volatility case (p = 1, d = 0)
+function Priors(m::T, P::T, S::T) where T <: AbstractFloat
+    m = reshape([m], 1, 1)
+    P = reshape([P], 1, 1)
+    S = reshape([S], 1, 1)
+    return (Priors(m, P, S))
+end
+
+# Outer constructor for multivariate stochastic volatility case (d = 0)
+function Priors(m::T, P::T, S::Array{T, 2}) where T <: AbstractFloat
+    m = reshape([m], 1, 1)
+    P = reshape([p], 1, 1)
+    return (Priors(m, P, S))
+end
+
+##################
+### Simulation ###
+##################
+
 mutable struct Simulation{T<:AbstractFloat}
     m::Array{T, 3}
     Σ::Array{T, 3}
@@ -73,6 +107,10 @@ end
 function Simulation(m::Array{T, 2}, Σ::Array{T, 2}, N::Integer) where T <: AbstractFloat
     Simulation(expandArray(m, N), expandArray(Σ, N))
 end
+
+#############
+### Model ###
+#############
 
 mutable struct Model{T<:AbstractFloat}
     y::Array{T, 2}
